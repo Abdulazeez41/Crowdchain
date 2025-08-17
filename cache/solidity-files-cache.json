@@ -383,7 +383,7 @@
       ]
     },
     "/home/abdulazeez/Github/Crowdchain/contracts/CrowdchainGovernor.sol": {
-      "lastModificationDate": 1755431266233,
+      "lastModificationDate": 1755467566266,
       "contentHash": "76e3a15b51a2c79f3a4d7dbb25671ca8",
       "sourceName": "contracts/CrowdchainGovernor.sol",
       "solcConfig": {

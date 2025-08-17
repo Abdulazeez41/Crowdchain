@@ -12,6 +12,45 @@ async function advanceTime(seconds) {
   }
 }
 
+async function waitForProposalState(
+  governor,
+  proposalId,
+  expectedState,
+  interval = 15000,
+  maxTries = 120
+) {
+  const states = [
+    "Pending",
+    "Active",
+    "Defeated",
+    "Succeeded",
+    "Queued",
+    "Executed",
+    "Expired",
+    "Canceled",
+  ];
+  for (let i = 0; i < maxTries; i++) {
+    try {
+      const state = await governor.state(proposalId);
+      console.log(
+        `⏳ Current state = ${
+          states[Number(state)]
+        } (${state}) (expecting ${expectedState})`
+      );
+      if (state === expectedState) {
+        console.log(
+          `✅ Proposal reached state: ${states[Number(state)]} (${state})`
+        );
+        return;
+      }
+    } catch (err) {
+      console.log("⚠️ Error checking state, retrying...", err.message);
+    }
+    await new Promise((r) => setTimeout(r, interval));
+  }
+  throw new Error(`❌ Proposal did not reach state ${expectedState} in time`);
+}
+
 async function main() {
   console.log("🔗 Starting Interaction...\n");
 
@@ -57,7 +96,7 @@ async function main() {
   const tx = await campaignFactory.createCampaign(
     "Education Fund",
     "Raising funds for decentralized education",
-    ethers.parseEther("0.001"),
+    ethers.parseEther("0.0002"),
     7,
     beneficiary.address
   );
@@ -75,15 +114,15 @@ async function main() {
   console.log("💰 Funding Campaign...");
   await user1.sendTransaction({
     to: campaignAddress,
-    value: ethers.parseEther("0.0005"),
+    value: ethers.parseEther("0.0001"),
   });
-  console.log("   ➡️ User1 funded 0.0005 ETH");
+  console.log("   ➡️ User1 funded 0.0001 ETH");
 
   await user2.sendTransaction({
     to: campaignAddress,
-    value: ethers.parseEther("0.0005"),
+    value: ethers.parseEther("0.0001"),
   });
-  console.log("   ➡️ User2 funded 0.0005 ETH");
+  console.log("   ➡️ User2 funded 0.0001 ETH");
 
   const Campaign = await ethers.getContractFactory("Campaign");
   const campaign = Campaign.attach(campaignAddress);
@@ -108,22 +147,21 @@ async function main() {
   // Fund Treasury
   await deployer.sendTransaction({
     to: treasuryAddr,
-    value: ethers.parseEther("0.01"),
+    value: ethers.parseEther("0.0001"),
   });
-  console.log("💎 0.01 ETH sent to Treasury\n");
+  console.log("💎 0.0001 ETH sent to Treasury\n");
 
   // --------------------------------------------------------------------
-  // Delegate & Propose: Add Milestone
+  // 4. Delegate & Propose: Add Milestone
   // --------------------------------------------------------------------
   console.log("🗳️ Preparing Governance Proposal...");
 
-  // Delegate voting power
   await token.connect(deployer).delegate(deployer.address);
   console.log("👤 Voting power delegated\n");
 
   const addCall = treasury.interface.encodeFunctionData("addMilestone", [
     1,
-    ethers.parseEther("0.005"),
+    ethers.parseEther("0.00005"),
     "Frontend Development",
   ]);
 
@@ -143,39 +181,40 @@ async function main() {
   if (!proposalEvent) throw new Error("❌ ProposalCreated event not found");
 
   const args = proposalEvent.args;
-  console.log("🔍 Proposal ID:", args[0].toString());
   const proposalId = args[0];
+  console.log(`🔍 Proposal ID: ${proposalId.toString()}`);
 
-  console.log(`✅ Proposal ${proposalId} created`);
+  // Debug snapshot
+  const snapshot = await governor.proposalSnapshot(proposalId);
+  const deadline = await governor.proposalDeadline(proposalId);
+  const currentBlock = await ethers.provider.getBlockNumber();
+  console.log(`📌 Proposal will activate at block: ${snapshot}`);
+  console.log(`📌 Proposal deadline: ${deadline}`);
+  console.log(`📌 Current block: ${currentBlock}`);
 
-  console.log("⏳ Waiting for proposal to become active...");
-  while (true) {
-    try {
-      const state = await governor.state(proposalId);
-      if (state === 1) {
-        console.log("✅ Proposal is now active. Casting vote...");
-        break;
-      }
-      console.log(`⏳ Proposal state: ${state}. Retrying in 30 seconds...`);
-      await new Promise((r) => setTimeout(r, 30000));
-    } catch (err) {
-      console.log("⚠️  Error checking state, retrying...", err.message);
-      await new Promise((r) => setTimeout(r, 30000));
-    }
-  }
+  await waitForProposalState(governor, proposalId, 1n, 15000, 60);
 
-  // Vote
   await governor.castVote(proposalId, 1);
   console.log("🗳️ Vote cast\n");
 
-  // Wait for voting period (50 blocks ≈ 1000 seconds on Base)
-  console.log("⏳ Waiting for voting period to end...");
-  await advanceTime(60 * 60 * 2); // 2 hours
+  console.log("⏳ Waiting for proposal to succeed...");
+  await waitForProposalState(governor, proposalId, 3n, 30000, 60);
+
+  const GovernorFactory = await ethers.getContractFactory("MyGovernor");
+  const freshGovernor = GovernorFactory.attach(GOVERNOR_ADDR);
+
+  console.log("📡 Governor address:", await freshGovernor.getAddress());
+  console.log("✅ Governor instance is valid and ready to queue.");
 
   // Queue
   const descriptionHash = ethers.id(description);
-  await governor.queue([treasuryAddr], [0], [addCall], descriptionHash);
-  console.log("⏳ Proposal queued\n");
+  try {
+    await freshGovernor.queue([treasuryAddr], [0], [addCall], descriptionHash);
+    console.log("✅ Proposal queued\n");
+  } catch (err) {
+    console.error("❌ Queue failed:", err.message);
+    throw err;
+  }
 
   // Timelock delay (1 hour)
   console.log("⏳ Waiting for timelock delay...");
@@ -186,7 +225,7 @@ async function main() {
   console.log("✅ Milestone 1 added via governance\n");
 
   // --------------------------------------------------------------------
-  // 5. Propose: Release Milestone
+  // Propose: Release Milestone
   // --------------------------------------------------------------------
   const releaseCall = treasury.interface.encodeFunctionData(
     "releaseMilestone",
@@ -205,13 +244,13 @@ async function main() {
     (l) => l.fragment?.name === "ProposalCreated"
   );
   if (!releaseEvent) throw new Error("❌ ProposalCreated event not found");
-  const releaseId = releaseEvent.args.proposalId;
+  const releaseId = releaseEvent.args[0];
 
   console.log("🗳️ Voting on release proposal...");
   await governor.castVote(releaseId, 1);
 
-  console.log("⏳ Waiting for voting period...");
-  await advanceTime(60 * 60 * 2);
+  console.log("⏳ Waiting for release proposal to succeed...");
+  await waitForProposalState(governor, releaseId, 3n, 30000, 60);
 
   const releaseHash = ethers.id(releaseDesc);
   await governor.queue([treasuryAddr], [0], [releaseCall], releaseHash);
