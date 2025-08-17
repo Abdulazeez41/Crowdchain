@@ -1,14 +1,11 @@
-⏳ Deploying TimelockController...
 ✅ Timelock deployed at: 0xf6E870922080d9864200D826626c6e71F8Db34ff
 https://sepolia.basescan.org/address/0xf6E870922080d9864200D826626c6e71F8Db34ff#code
 
 ✅ Governance Token deployed at: 0x596f5FcEdc3967f25a2E4D43eb51BDEcF2080460
 https://sepolia.basescan.org/address/0x596f5FcEdc3967f25a2E4D43eb51BDEcF2080460#code
 
-
 ✅ Governor deployed at: 0xca52BA741C1C250452fd29979c7eE9CC966c2aB2
 https://sepolia.basescan.org/address/0xca52BA741C1C250452fd29979c7eE9CC966c2aB2#code
 
-⏳ Deploying CampaignFactory...
 ✅ CampaignFactory deployed at: 0x24074e8A000592389BBA4FdBe82DC17e07c89A08
 https://sepolia.basescan.org/address/0x24074e8A000592389BBA4FdBe82DC17e07c89A08#code
