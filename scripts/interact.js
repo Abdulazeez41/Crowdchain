@@ -131,6 +131,49 @@ async function main() {
   console.log(`📊 Total Funded: ${ethers.formatEther(totalFunded)} ETH\n`);
 
   // --------------------------------------------------------------------
+  // Get all campaigns from CampaignFactory
+  // --------------------------------------------------------------------
+  console.log("\n📂 Fetching all campaigns...");
+  const allCampaigns = await campaignFactory.getAllCampaigns();
+
+  console.log(`📊 Total campaigns deployed: ${allCampaigns.length}`);
+  allCampaigns.forEach((addr, i) => {
+    console.log(`   #${i + 1}: ${addr}`);
+  });
+
+  // --------------------------------------------------------------------
+  // Get campaigns from CampaignFactory (simple + detailed)
+  // --------------------------------------------------------------------
+  console.log("\n📂 Fetching campaigns from Factory...");
+
+  // 2️⃣ Full details of all campaigns (uses getAllCampaignDetails)
+  const allDetails = await campaignFactory.getAllCampaignDetails();
+
+  console.log("\n📑 Campaign Details:");
+  for (let i = 0; i < allDetails.campaignAddresses.length; i++) {
+    console.log(`\n#${i + 1} Campaign`);
+    console.log(`   Address     : ${allDetails.campaignAddresses[i]}`);
+    console.log(`   Name        : ${allDetails.names[i]}`);
+    console.log(`   Description : ${allDetails.descriptions[i]}`);
+    console.log(
+      `   Goal        : ${ethers.formatEther(allDetails.goals[i])} ETH`
+    );
+    console.log(
+      `   Funded      : ${ethers.formatEther(allDetails.totalFunded[i])} ETH`
+    );
+    console.log(
+      `   Deadline    : ${new Date(
+        Number(allDetails.deadlines[i]) * 1000
+      ).toLocaleString()}`
+    );
+    console.log(`   Beneficiary : ${allDetails.beneficiaries[i]}`);
+    console.log(`   Creator     : ${allDetails.creators[i]}`);
+    console.log(
+      `   Active?     : ${allDetails.actives[i] ? "✅ Active" : "❌ Closed"}`
+    );
+  }
+
+  // --------------------------------------------------------------------
   // Deploy & Fund Treasury
   // --------------------------------------------------------------------
   console.log("⏳ Deploying Treasury...");

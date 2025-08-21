@@ -57,4 +57,69 @@ contract CampaignFactory {
     function getAllCampaigns() external view returns (address[] memory) {
         return campaigns;
     }
+
+    /// @notice Get details of a single campaign by index
+    function getCampaign(uint256 index) external view returns (
+        address campaignAddress,
+        string memory name,
+        string memory description,
+        uint256 goal,
+        uint256 deadline,
+        address beneficiary,
+        address creator,
+        uint256 totalFunded,
+        bool isActive
+    ) {
+        require(index < campaigns.length, "Invalid index");
+        Campaign c = Campaign(payable(campaigns[index]));
+        return (
+            address(c),
+            c.name(),
+            c.description(),
+            c.goal(),
+            c.deadline(),
+            c.beneficiary(),
+            c.creator(),
+            c.totalFunded(),
+            c.isActive()
+        );
+    }
+
+    /// @notice Fetch all campaign details in one call
+    function getAllCampaignDetails() external view returns (
+        address[] memory campaignAddresses,
+        string[] memory names,
+        string[] memory descriptions,
+        uint256[] memory goals,
+        uint256[] memory deadlines,
+        address[] memory beneficiaries,
+        address[] memory creators,
+        uint256[] memory totalFunded,
+        bool[] memory actives
+    ) {
+        uint256 len = campaigns.length;
+
+        campaignAddresses = new address[](len);
+        names = new string[](len);
+        descriptions = new string[](len);
+        goals = new uint256[](len);
+        deadlines = new uint256[](len);
+        beneficiaries = new address[](len);
+        creators = new address[](len);
+        totalFunded = new uint256[](len);
+        actives = new bool[](len);
+
+        for (uint256 i = 0; i < len; i++) {
+            Campaign c = Campaign(payable(campaigns[i]));
+            campaignAddresses[i] = address(c);
+            names[i] = c.name();
+            descriptions[i] = c.description();
+            goals[i] = c.goal();
+            deadlines[i] = c.deadline();
+            beneficiaries[i] = c.beneficiary();
+            creators[i] = c.creator();
+            totalFunded[i] = c.totalFunded();
+            actives[i] = c.isActive();
+        }
+    }
 }

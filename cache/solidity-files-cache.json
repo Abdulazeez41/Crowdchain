@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/abdulazeez/Github/Crowdchain/contracts/Campaign.sol": {
-      "lastModificationDate": 1755443167373,
-      "contentHash": "8a3913163efcf7a32da8864f9a6d3b16",
+      "lastModificationDate": 1755770462849,
+      "contentHash": "9cbe1f16d6a64afd4db32d17068cb14a",
       "sourceName": "contracts/Campaign.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -344,8 +344,8 @@
       ]
     },
     "/home/abdulazeez/Github/Crowdchain/contracts/CampaignFactory.sol": {
-      "lastModificationDate": 1755415667513,
-      "contentHash": "fab504eb67df995d4116a5bc704bb749",
+      "lastModificationDate": 1755769589937,
+      "contentHash": "545982a99d8b9e9cced8bed71d18aad1",
       "sourceName": "contracts/CampaignFactory.sol",
       "solcConfig": {
         "version": "0.8.28",

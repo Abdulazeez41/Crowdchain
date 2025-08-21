@@ -17,6 +17,7 @@ contract Campaign is Ownable, Initializable, ReentrancyGuard {
     uint256 public goal;
     uint256 public deadline;
     address public beneficiary;
+    address public creator;
 
     uint256 public totalFunded;
     mapping(address => uint256) public contributions;
@@ -40,6 +41,7 @@ contract Campaign is Ownable, Initializable, ReentrancyGuard {
         goal = _goal;
         deadline = block.timestamp + (_durationDays * 1 days);
         beneficiary = _beneficiary;
+        creator = _owner;
         state = State.Funding;
         _transferOwnership(_owner);
     }
@@ -100,5 +102,9 @@ contract Campaign is Ownable, Initializable, ReentrancyGuard {
     // --- View Helpers ---
     function goalReached() external view returns (bool) {
         return totalFunded >= goal;
+    }
+
+    function isActive() external view returns (bool) {
+        return state == State.Funding && block.timestamp < deadline;
     }
 }
